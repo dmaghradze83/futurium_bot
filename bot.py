@@ -10,7 +10,7 @@ app = Flask(__name__)
 # ⚙️ CONFIG
 # ==========================================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyCuCICQSUYuSAxhBjU_ohqU8KZeugq0tGE")
-NGROK_URL = "https://bot.futurium.ge/webhook"
+NGROK_URL = "https://bot.futurium.ge"
 HANDLER_URL = f"{NGROK_URL}/webhook"
 CONFIG_FILE = "appsConfig.json"
 INFO_FILE = "company_info.txt"  # 👈 ახალი ფაილი
