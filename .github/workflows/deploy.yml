@@ -1,0 +1,30 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main  # ან master, გააჩნია შენს ბრენჩს რა ქვია
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script: |
+            # შევდივართ საქაღალდეში
+            cd /var/www/futurium_bot
+            
+            # ვიწერეთ ახალ კოდს
+            git pull origin main
+            
+            # ვააქტიურებთ გარემოს და ვაახლებთ ბიბლიოთეკებს (თუ რამე დაემატა)
+            source venv/bin/activate
+            pip install -r requirements.txt
+            
+            # გადავტვირთავთ ბოტს
+            systemctl restart futurium_bot
