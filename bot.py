@@ -1,6 +1,6 @@
 import os
 import json
-import sqlite3  # 👈 1. დაემატა ბაზის ბიბლიოთეკა
+import sqlite3  # 👈 დაემატა ბაზა
 from flask import Flask, request
 import requests
 import google.generativeai as genai
@@ -15,9 +15,9 @@ NGROK_URL = "https://bot.futurium.ge"
 HANDLER_URL = f"{NGROK_URL}/webhook"
 CONFIG_FILE = "appsConfig.json"
 INFO_FILE = "company_info.txt"
-DB_NAME = "bot_memory.db"  # 👈 2. ბაზის სახელი
+DB_NAME = "bot_memory.db"  # 👈 დაემატა ბაზის სახელი
 
-BOT_CODE = "Gemini_ITR_Final-20"
+BOT_CODE = "Gemini_ITR_Final-20" 
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
@@ -28,11 +28,9 @@ else:
 # 🗄️ DATABASE (ახალი: მეხსიერების ბლოკი)
 # ==========================================
 def init_db():
-    """ქმნის ბაზას და ცხრილს, თუ არ არსებობს"""
     try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        # ვქმნით ცხრილს: id, chat_id (ვისი ჩატია), role (ვინ წერს), content (ტექსტი)
         c.execute('''
             CREATE TABLE IF NOT EXISTS history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,7 +46,6 @@ def init_db():
         print(f"❌ DB Init Error: {e}")
 
 def save_message_to_db(chat_id, role, content):
-    """ინახავს მესიჯს ბაზაში"""
     try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
@@ -60,18 +57,14 @@ def save_message_to_db(chat_id, role, content):
         print(f"⚠️ DB Save Error: {e}")
 
 def load_history_from_db(chat_id):
-    """კითხულობს კონკრეტული მომხმარებლის ისტორიას"""
     try:
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        # ვიღებთ ბოლო 20 მესიჯს, რომ კონტექსტი არ გადაიტვირთოს
         c.execute("SELECT role, content FROM history WHERE chat_id = ? ORDER BY id ASC LIMIT 20", (str(chat_id),))
         rows = c.fetchall()
         conn.close()
-
         formatted = []
         for role, content in rows:
-            # Gemini-ს სჭირდება 'user' და 'model' როლები
             formatted.append({"role": role, "parts": [content]})
         return formatted
     except Exception as e:
@@ -94,42 +87,44 @@ def load_company_info():
         return "შენ ხარ დამხმარე AI ასისტენტი."
 
 # ==========================================
-# 🧠 AI (განახლებული ლოგიკა კონტექსტით)
+# 🧠 AI (შენი მოდელებით + მეხსიერებით)
 # ==========================================
 def get_ai_response(chat_id: str, message: str) -> str:
     if not GEMINI_API_KEY:
         return "ბოდიში, AI არ მუშაობს (GEMINI_API_KEY ცარიელია)."
 
-    # 1. ვკითხულობთ ინსტრუქციას და ისტორიას
     system_instruction = load_company_info()
     history = load_history_from_db(chat_id) # 👈 ბაზიდან ამოღება
     
+    # აქ ვცდილობთ ჯერ შენს 2.5-ს, შემდეგ pro-ს
     try:
-        # 2. ვქმნით მოდელს ინსტრუქციით
-        # 1.5 Flash არის სწრაფი და კარგი კონტექსტისთვის
+        # 👇 აქ დავაბრუნე შენი gemini-2.5-flash
         model = genai.GenerativeModel("gemini-2.5-flash", system_instruction=system_instruction)
-        
-        # 3. ვიწყებთ ჩატს ისტორიით (აქ ხდება "მეხსიერების" ჩატვირთვა)
-        chat = model.start_chat(history=history)
-        
-        # 4. ვაგზავნით ახალ მესიჯს
+        chat = model.start_chat(history=history) # start_chat აუცილებელია მეხსიერებისთვის
         response = chat.send_message(message)
+        
         text_response = response.text
-
-        # 5. ვინახავთ ახალ მესიჯებს ბაზაში (მომავლისთვის)
+        
+        # ინახავს ბაზაში წარმატების შემთხვევაში
         save_message_to_db(chat_id, "user", message)
         save_message_to_db(chat_id, "model", text_response)
-
+        
         return text_response
 
     except Exception as e1:
         print(f"❌ Gemini error (2.5-flash): {e1}")
-        # Fallback: თუ ისტორიამ აურია, ვცადოთ უბრალოდ პრომპტით (Gemini Pro)
         try:
-            full_prompt = f"{system_instruction}\n\nHistory: {history}\nUser: {message}"
-            model = genai.GenerativeModel("gemini-pro")
-            response = model.generate_content(full_prompt)
-            return response.text
+            # 👇 აქაც დავაბრუნე შენი ლოგიკა gemini-pro-ზე
+            model = genai.GenerativeModel("gemini-pro", system_instruction=system_instruction)
+            chat = model.start_chat(history=history)
+            response = chat.send_message(message)
+            
+            text_response = response.text
+            
+            save_message_to_db(chat_id, "user", message)
+            save_message_to_db(chat_id, "model", text_response)
+
+            return text_response
         except Exception as e2:
             print(f"❌ Gemini error (gemini-pro): {e2}")
             return "ბოდიში, AI დროებით მიუწვდომელია."
@@ -352,7 +347,6 @@ def main_handler():
         print(f"\n📩 Incoming: msg={message}")
 
         if message and chat_id:
-            # 👇 chat_id-ს ვატანთ, რომ ვიცოდეთ ვისი ისტორია წავიკითხოთ
             process_bot_logic(chat_id, message, auth_for_work, bot_id)
 
         return "OK", 200
@@ -386,7 +380,7 @@ def process_bot_logic(chat_id, message, auth_data, bot_id):
         )
 
     else:
-        # 👇 აქ ვეძახით AI-ს chat_id-ით
+        # 👇 აქ ვატანთ chat_id-ს
         ai_text = get_ai_response(chat_id, message)
         print(f"🤖 AI Answer: {ai_text[:120]}...")
         send_message(chat_id, ai_text, auth_data, bot_id)
