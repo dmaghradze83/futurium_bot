@@ -16,8 +16,10 @@ CONFIG_FILE = "appsConfig.json"
 INFO_FILE = "company_info.txt"  # 👈 ახალი ფაილი
 
 BOT_CODE = "Gemini_ITR_Final-20" 
-
-genai.configure(api_key=GEMINI_API_KEY)
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    print("❌ ERROR: GEMINI_API_KEY ვერ მოიძებნა!")
 
 # ==========================================
 # 📂 INFO FILE LOADER (ახალი ფუნქცია)
