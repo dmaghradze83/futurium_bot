@@ -107,7 +107,7 @@ def get_ai_response(chat_id: str, message: str) -> str:
     try:
         # 2. ვქმნით მოდელს ინსტრუქციით
         # 1.5 Flash არის სწრაფი და კარგი კონტექსტისთვის
-        model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=system_instruction)
+        model = genai.GenerativeModel("gemini-2.5-flash", system_instruction=system_instruction)
         
         # 3. ვიწყებთ ჩატს ისტორიით (აქ ხდება "მეხსიერების" ჩატვირთვა)
         chat = model.start_chat(history=history)
@@ -123,7 +123,7 @@ def get_ai_response(chat_id: str, message: str) -> str:
         return text_response
 
     except Exception as e1:
-        print(f"❌ Gemini error (1.5-flash): {e1}")
+        print(f"❌ Gemini error (2.5-flash): {e1}")
         # Fallback: თუ ისტორიამ აურია, ვცადოთ უბრალოდ პრომპტით (Gemini Pro)
         try:
             full_prompt = f"{system_instruction}\n\nHistory: {history}\nUser: {message}"
