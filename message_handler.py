@@ -67,10 +67,10 @@ def _process_commands(chat_id, message, auth_data, bot_id, ai_engine):
         BitrixClient.send_message(chat_id, text, auth_data, bot_id)
 
     # ოპერატორთან გადართვა
-    elif msg_lower == "1" or "ოპერატორ" in msg_lower:
-        BitrixClient.send_message(chat_id, "გადამყავს ოპერატორთან...", auth_data, bot_id)
-        BitrixClient.call("imopenlines.bot.session.transfer",
-            {"CHAT_ID": str(chat_id).replace("chat", ""), "LEAVE": "Y"}, auth_data)
+#     elif msg_lower == "1" or "ოპერატორ" in msg_lower:
+#        BitrixClient.send_message(chat_id, "გადამყავს ოპერატორთან...", auth_data, bot_id)
+#       BitrixClient.call("imopenlines.bot.session.transfer",
+#          {"CHAT_ID": str(chat_id).replace("chat", ""), "LEAVE": "Y"}, auth_data)
 
     # საუბრის დასრულება
     elif msg_lower == "9" or "დასრულება" in msg_lower:
