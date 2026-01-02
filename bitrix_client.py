@@ -3,21 +3,39 @@ import requests
 class BitrixClient:
     @staticmethod
     def call(method, params, auth_data):
+        # 1. დომენის ამოღება (დაცული მეთოდით)
         domain = auth_data.get("domain")
         if not domain and auth_data.get("client_endpoint"):
-            domain = auth_data["client_endpoint"].split("/rest")[0].replace("https://", "").replace("http://", "")
+            try:
+                domain = auth_data["client_endpoint"].split("/rest")[0].replace("https://", "").replace("http://", "")
+            except:
+                domain = ""
 
-        if not domain: return {}
+        if not domain:
+            print(f"❌ REST Error ({method}): Domain not found in auth_data")
+            return {}
 
+        # 2. URL-ის აწყობა
         url = f"https://{domain}/rest/{method}"
-        payload = dict(params or {})
-        payload["auth"] = auth_data.get("access_token")
 
+        # 3. მონაცემების მომზადება (ვრწმუნდებით, რომ dictionary-ია)
         try:
+            payload = dict(params or {})
+        except:
+            payload = {}
+
+        # ავტორიზაციის კოდის ჩამატება (მხოლოდ სტრინგი!)
+        token = auth_data.get("access_token")
+        if token:
+            payload["auth"] = str(token)
+
+        # 4. გაგზავნა
+        try:
+            # requests-ს მონაცემები გადაეცემა 'data'-თი, რაც ავტომატურად ამუშავებს Dictionary-ს
             response = requests.post(url, data=payload, timeout=25)
-            print(f" REST : " + response.json())
             return response.json()
         except Exception as e:
+            # აქ ვბეჭდავთ შეცდომას დეტალურად
             print(f"❌ REST Error ({method}): {e}")
             return {}
 
@@ -26,10 +44,12 @@ class BitrixClient:
         if not bot_id: 
             print("🛑 BOT_ID missing, cannot send message.")
             return
-            
+        
+        # chat_id და bot_id სტრინგებად გადაგვყავს
         res = BitrixClient.call("imbot.message.add", 
-                          {"BOT_ID": str(bot_id), "DIALOG_ID": str(chat_id), "MESSAGE": text}, 
+                          {"BOT_ID": str(bot_id), "DIALOG_ID": str(chat_id), "MESSAGE": str(text)}, 
                           auth_data)
+        
         if "result" in res:
             print("✅ Sent successfully!")
         else:
@@ -45,7 +65,6 @@ class BitrixClient:
                 for b in raw:
                     if str(b.get("CODE")) == str(bot_code): 
                         return b.get("ID")
-            # თუ ID-ების სიაა
             ids = [str(x) for x in raw if isinstance(x, (str, int))]
             if len(ids) == 1: return ids[0]
 
