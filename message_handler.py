@@ -28,8 +28,6 @@ def handle_incoming_message(data, incoming_auth, ai_engine):
         auth_for_work = incoming_auth
         if bot_id:
             ConfigManager.update_mapping(app_sid, domain, bot_id, auth_for_work)
-            print("♻️ Token updated from request.")
-
     else:
         if domain and domain in apps_config:
             auth_for_work = apps_config[domain]["AUTH"]
@@ -55,7 +53,7 @@ def handle_incoming_message(data, incoming_auth, ai_engine):
 
 def _process_with_ai_logic(chat_id, message, auth_data, bot_id, ai_engine):
     """
-    ყველაფერს ვუგზავნით AI-ს და მისი პასუხის მიხედვით ვმოქმედებთ.
+    ყველაფერს ვუგზავნით AI-ს.
     """
     
     # 1. მივიღოთ პასუხი AI-სგან
@@ -63,7 +61,7 @@ def _process_with_ai_logic(chat_id, message, auth_data, bot_id, ai_engine):
     
     # 2. ვამოწმებთ, AI-მ ხომ არ გვითხრა "გადართეო" (TRANSFER_AGENT)
     if "TRANSFER_AGENT" in ai_text:
-        print(f"🤖 AI Logic: მომხმარებელმა მოითხოვა ოპერატორი. (AI Output: {ai_text})")
+        print(f"🤖 AI Logic: მომხმარებელმა მოითხოვა ოპერატორი.")
         transfer_to_agent(chat_id, auth_data, bot_id)
         return
 
@@ -75,17 +73,16 @@ def _process_with_ai_logic(chat_id, message, auth_data, bot_id, ai_engine):
 def transfer_to_agent(chat_id, auth_data, bot_id):
     """გადართავს საუბარს რიგში მდგომ ოპერატორთან"""
     
-    # 1. შეტყობინება
+    # 1. ტექსტის გაგზავნა
     BitrixClient.send_message(chat_id, "მიმდინარეობს გაყიდვების მენეჯერთან გადართვა... ⏳", auth_data, bot_id)
     
-    # 2. გადართვა
-    # ვრწმუნდებით, რომ ID სუფთა სტრინგია
+    # 2. გადართვა (შენი ნაპოვნი მეთოდით)
     real_chat_id = str(chat_id).replace("chat", "")
     
-    BitrixClient.call("imopenlines.bot.session.transfer",
+    # 👇 აი ზუსტად ის მეთოდი, რომელიც იპოვე
+    BitrixClient.call("imopenlines.bot.session.operator",
         {
-            "CHAT_ID": real_chat_id, 
-            "LEAVE": "Y"
+            "CHAT_ID": real_chat_id
         }, 
         auth_data
     )
