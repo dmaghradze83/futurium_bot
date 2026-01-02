@@ -15,6 +15,7 @@ class BitrixClient:
 
         try:
             response = requests.post(url, data=payload, timeout=25)
+            print(f" REST : " + response.json())
             return response.json()
         except Exception as e:
             print(f"❌ REST Error ({method}): {e}")
