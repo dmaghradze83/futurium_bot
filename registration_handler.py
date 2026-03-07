@@ -51,7 +51,7 @@ def handle_install(data, incoming_auth):
                 name: 'Gemini (Georgian)',
                 code: 'gemini_pro_geo',
                 category: 'text',
-                completions_url: '{Config.NGROK_URL}/api/ai/completions',
+                completions_url: 'https://bot.futurium.ge/api/ai/completions',
                 settings: {{
                     code_alias: 'gemini_pro_geo',
                     model_context_type: 'token',
