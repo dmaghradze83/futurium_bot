@@ -17,7 +17,7 @@ def handle_install(data, incoming_auth):
         "name": "Gemini (Georgian)",
         "code": "gemini_pro_geo",
         "category": "text",
-        "completions_url": f"{Config.BASE_URL}/api/ai/completions",
+        "completions_url": f"{Config.NGROK_URL}/api/ai/completions",
         "settings": json.dumps({               # 👈 JS-ისგან განსხვავებით, აქ ვფუთავთ
             "code_alias": "gemini_pro_geo",           # Bitrix-ს ვეუბნებით, რომ ChatGPT-სავით მოექცეს
             "model_context_type": "token",
