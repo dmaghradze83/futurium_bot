@@ -1,48 +1,83 @@
-from config import Config, ConfigManager
-from bitrix_client import BitrixClient
+from flask import Flask, request, jsonify
+import utils
+from database import DatabaseManager
+from ai_engine import AIEngine
+# იმპორტი ახალი ჰენდლერებიდან
+from registration_handler import handle_install
+from message_handler import handle_incoming_message
 
-def handle_install(data, incoming_auth):
-    """ამუშავებს ინსტალაციის ივენთს"""
-    
-    app_sid = incoming_auth['application_token']
-    domain = incoming_auth['domain']
+app = Flask(__name__)
 
-    print(f"\n🔔 Install/Update detected... domain={domain}")
-    
-    # 1. რეგისტრაციის მოთხოვნა Bitrix-თან
-    result = BitrixClient.call("imbot.register", Config.REG_PARAMS, incoming_auth)
+# ინიციალიზაცია
+db = DatabaseManager()
+ai = AIEngine(db)
 
-    # CoPilot-ის ტექსტის გენერატორის (Gemini) პარამეტრები
-    ai_engine_params = {
-        "name": "Gemini (Georgian)", 
-        "code": "gemini_pro_geo",   
-        "category": "text",          
-        "completions_url": f"{Config.NGROK_URL}/api/ai/completions", # 👈 დარწმუნდი, რომ Config-ში BASE_URL გაქვს
-        "settings": {
-            "model_context_limit": 32000
-        }
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    data = request.values
+    event = data.get("event")
+
+    # მონაცემების ამოღება (Parsing)
+    access_token = data.get("auth[access_token]") or data.get("AUTH_ID")
+    app_sid = utils.extract_app_sid(data)
+    domain = utils.extract_domain(data)
+
+    incoming_auth = {
+        "access_token": access_token,
+        "domain": domain,
+        "application_token": app_sid,
+        "client_endpoint": data.get("auth[client_endpoint]"),
     }
 
-    # AI ძრავის რეგისტრაციის მოთხოვნა
-    ai_result = BitrixClient.call("ai.engine.register", ai_engine_params, incoming_auth)
-    print(f"🧠 AI Engine registration: {ai_result}")
-
-    # HTML პასუხი, რასაც Bitrix ელოდება iframe-ში
-    finish_html = """<!DOCTYPE html><html><head>
-    <script src="//api.bitrix24.com/api/v1/"></script>
-    <script>BX24.init(function(){BX24.installFinish();});</script>
-    </head><body>INSTALLED</body></html>"""
-
-    if "result" in result:
-        bot_id = result["result"]
-        print(f"✅ Bot registered! BOT_ID={bot_id}")
-        
-        # 2. ივენთის მიბმა განახლებაზე
-        BitrixClient.call("event.bind", {"EVENT": "OnAppUpdate", "HANDLER": Config.HANDLER_URL}, incoming_auth)
-        
-        # 3. მონაცემების შენახვა config ფაილში
-        ConfigManager.update_mapping(app_sid, domain, bot_id, incoming_auth)
-        return finish_html
+    # 1. ინსტალაციის დამუშავება
+    should_register = (event == "ONAPPINSTALL") or ("AUTH_ID" in data) or ("APP_SID" in data)
     
-    print(f"❌ imbot.register failed: {result}")
-    return finish_html
+    if should_register and access_token:
+        # გადავამისამართებთ registration_handler-ში
+        return handle_install(data, incoming_auth)
+
+    # 2. მესიჯის დამუშავება
+    if event == "ONIMBOTMESSAGEADD":
+        # გადავამისამართებთ message_handler-ში
+        return handle_incoming_message(data, incoming_auth, ai)
+
+    return "OK", 200
+
+
+# =====================================================================
+# 👇 აქედან იწყება  CoPilot (Gemini) Endpoint-ი 👇
+# =====================================================================
+@app.route("/api/ai/completions", methods=["GET", "POST"])
+def ai_completions():
+    # 1. Bitrix-ის სატესტო შემოწმება რეგისტრაციის დროს (GET მოთხოვნა)
+    if request.method == "GET":
+        return jsonify({"status": "success"}), 200
+
+    # 2. ტექსტის გენერაციის რეალური მოთხოვნა CoPilot-იდან (POST მოთხოვნა)
+    try:
+        data = request.get_json() or {}
+        
+        # თუ რეგისტრაციის დროს ცარიელი POST წამოვიდა, ვაბრუნებთ 200-ს, რომ error არ ამოაგდოს
+        if not data:
+            return jsonify({"status": "success"}), 200
+
+        # ვიღებთ მომხმარებლის მიერ დაწერილ ტექსტს (პრომპტს)
+        prompt = data.get("prompt", "")
+        
+        # სატესტო პასუხი, სანამ Gemini-ს მივაბამთ
+        generated_text = f"მე ვარ შენი CoPilot ასისტენტი. შენ მომწერე: {prompt}"
+
+        # ❗️ როდესაც მზად იქნები, ზედა ხაზს წაშლი და გამოიყენებ შენს ai_engine-ს:
+        # generated_text = ai.generate_reply(prompt) # გააჩნია რა მეთოდი გაქვს AIEngine კლასში
+
+        # Bitrix ითხოვს პასუხს JSON ობიექტის სახით, რომელსაც აქვს ველი "result"
+        return jsonify({"result": generated_text}), 200
+
+    except Exception as e:
+        print(f"❌ Error in ai_completions: {e}")
+        # შეცდომის დროსაც სასურველია JSON დავაბრუნოთ
+        return jsonify({"error": str(e)}), 500
+# =====================================================================
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5001)
