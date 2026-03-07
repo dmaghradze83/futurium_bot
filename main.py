@@ -57,20 +57,18 @@ def ai_completions():
 
     try:
         data = request.get_json(force=True, silent=True) or {}
-        prompt = data.get("prompt", "")
-
         generated_text = "Test summary from custom AI engine."
 
-        response = {
-            "result": generated_text,
-            "answer": generated_text,
-            "content": generated_text,
-            "text": generated_text,
-            "status": "success"
-        }
-
-        print("Response JSON:", response, flush=True)
-        return jsonify(response), 200
+        return jsonify({
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": generated_text
+                    }
+                }
+            ]
+        }), 200
 
     except Exception as e:
         print("❌ ai_completions error:", e, flush=True)
