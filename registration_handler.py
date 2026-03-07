@@ -19,7 +19,7 @@ def handle_install(data, incoming_auth):
         "category": "text",
         "completions_url": f"{Config.BASE_URL}/api/ai/completions",
         "settings": json.dumps({               # 👈 JS-ისგან განსხვავებით, აქ ვფუთავთ
-            "code_alias": "ChatGPT",           # Bitrix-ს ვეუბნებით, რომ ChatGPT-სავით მოექცეს
+            "code_alias": "gemini_pro_geo",           # Bitrix-ს ვეუბნებით, რომ ChatGPT-სავით მოექცეს
             "model_context_type": "token",
             "model_context_limit": 16 * 1024   # ანუ 16384
         })
