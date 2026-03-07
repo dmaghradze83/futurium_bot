@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify  # 👈 აქ დაემატა jsonify
 import utils
 from database import DatabaseManager
 from ai_engine import AIEngine
@@ -42,6 +42,43 @@ def webhook():
         return handle_incoming_message(data, incoming_auth, ai)
 
     return "OK", 200
+
+
+# =====================================================================
+# 👇 აქედან იწყება ჩვენი ახალი CoPilot (Gemini) Endpoint-ი 👇
+# =====================================================================
+@app.route("/api/ai/completions", methods=["GET", "POST"])
+def ai_completions():
+    # 1. Bitrix-ის სატესტო შემოწმება რეგისტრაციის დროს (GET მოთხოვნა)
+    if request.method == "GET":
+        return jsonify({"status": "success"}), 200
+
+    # 2. ტექსტის გენერაციის რეალური მოთხოვნა CoPilot-იდან (POST მოთხოვნა)
+    try:
+        data = request.get_json() or {}
+        
+        # თუ რეგისტრაციის დროს ცარიელი POST წამოვიდა, ვაბრუნებთ 200-ს, რომ error არ ამოაგდოს
+        if not data:
+            return jsonify({"status": "success"}), 200
+
+        # ვიღებთ მომხმარებლის მიერ დაწერილ ტექსტს (პრომპტს)
+        prompt = data.get("prompt", "")
+        
+        # სატესტო პასუხი, სანამ Gemini-ს მივაბამთ
+        generated_text = f"მე ვარ შენი CoPilot ასისტენტი. შენ მომწერე: {prompt}"
+
+        # ❗️ როდესაც მზად იქნები, ზედა ხაზს წაშლი და გამოიყენებ შენს ai_engine-ს:
+        # generated_text = ai.generate_reply(prompt) # გააჩნია რა მეთოდი გაქვს AIEngine კლასში
+
+        # Bitrix ითხოვს პასუხს JSON ობიექტის სახით, რომელსაც აქვს ველი "result"
+        return jsonify({"result": generated_text}), 200
+
+    except Exception as e:
+        print(f"❌ Error in ai_completions: {e}")
+        # შეცდომის დროსაც სასურველია JSON დავაბრუნოთ
+        return jsonify({"error": str(e)}), 500
+# =====================================================================
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
