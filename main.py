@@ -49,6 +49,8 @@ def webhook():
 # =====================================================================
 @app.route("/api/ai/completions", methods=["GET", "POST"])
 def ai_completions():
+    data = request.get_json() 
+    print(f"✅ request json {data}")
     # 1. Bitrix-ის სატესტო შემოწმება რეგისტრაციის დროს (GET მოთხოვნა)
     if request.method == "GET":
         return jsonify({"status": "success"}), 200
