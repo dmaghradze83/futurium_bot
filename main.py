@@ -47,24 +47,25 @@ def webhook():
 # =====================================================================
 # 👇 აქედან იწყება ჩვენი ახალი CoPilot (Gemini) Endpoint-ი 👇
 # =====================================================================
+# =====================================================================
+# 👇 აქედან იწყება ჩვენი ახალი CoPilot (Gemini) Endpoint-ი 👇
+# =====================================================================
 @app.route("/api/ai/completions", methods=["GET", "POST"])
 def ai_completions():
-    data = request.get_json(silent=True)
-        if not data:
-            data = request.values.to_dict()
-    # ვაიძულებთ პითონს, ლოგი მაშინვე გამოიტანოს ტერმინალში (flush=True)
-    print(f"\n✅ [CoPilot Request]: {data}\n", flush=True)
     # 1. Bitrix-ის სატესტო შემოწმება რეგისტრაციის დროს (GET მოთხოვნა)
     if request.method == "GET":
         return jsonify({"status": "success"}), 200
 
-    # 2. ტექსტის გენერაციის რეალური მოთხოვნა CoPilot-იდან (POST მოთხოვნა)
     try:
-        data = request.get_json() or {}
+        # მონაცემების წამოღება (JSON ან Form Data)
+        data = request.get_json(silent=True)
+        if not data:
+            data = request.values.to_dict()
 
-        print(f"✅ request json {data}")
-        
-        # თუ რეგისტრაციის დროს ცარიელი POST წამოვიდა, ვაბრუნებთ 200-ს, რომ error არ ამოაგდოს
+        # ვაიძულებთ პითონს, ლოგი მაშინვე გამოიტანოს ტერმინალში
+        print(f"\n✅ [CoPilot Request]: {data}\n", flush=True)
+
+        # თუ მონაცემები საერთოდ არ მოვიდა
         if not data:
             return jsonify({"status": "success"}), 200
 
@@ -75,15 +76,15 @@ def ai_completions():
         generated_text = f"მე ვარ შენი CoPilot ასისტენტი. შენ მომწერე: {prompt}"
 
         # ❗️ როდესაც მზად იქნები, ზედა ხაზს წაშლი და გამოიყენებ შენს ai_engine-ს:
-        # generated_text = ai.generate_reply(prompt) # გააჩნია რა მეთოდი გაქვს AIEngine კლასში
+        # generated_text = ai.generate_reply(prompt) 
 
-        # Bitrix ითხოვს პასუხს JSON ობიექტის სახით, რომელსაც აქვს ველი "result"
+        # ვაბრუნებთ პასუხს
         return jsonify({"result": generated_text}), 200
 
     except Exception as e:
-        print(f"❌ Error in ai_completions: {e}")
-        # შეცდომის დროსაც სასურველია JSON დავაბრუნოთ
+        print(f"❌ Error in ai_completions: {e}", flush=True)
         return jsonify({"error": str(e)}), 500
+# =====================================================================
 # =====================================================================
 
 
