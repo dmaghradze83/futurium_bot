@@ -52,17 +52,13 @@ def webhook():
 # =====================================================================
 @app.route("/api/ai/completions", methods=["GET", "POST"])
 def ai_completions():
-    # 1. Bitrix-ის სატესტო შემოწმება რეგისტრაციის დროს (GET მოთხოვნა)
     if request.method == "GET":
         return jsonify({"status": "success"}), 200
 
     try:
-        # მონაცემების წამოღება (JSON ან Form Data)
-
-        # სრული დიაგნოსტიკა
         raw_bytes = request.get_data(cache=True)
         raw_text = raw_bytes.decode("utf-8", errors="replace")
-        
+
         print("\n================= CoPilot DEBUG =================", flush=True)
         print("Method:", request.method, flush=True)
         print("Headers:", dict(request.headers), flush=True)
@@ -70,29 +66,29 @@ def ai_completions():
         print("Raw bytes len:", len(raw_bytes), flush=True)
         print("Raw text first 1000 chars:", raw_text[:1000], flush=True)
         print("=================================================\n", flush=True)
-        
+
         data = request.get_json(silent=True)
+
+        if not data and raw_text:
+            try:
+                data = json.loads(raw_text)
+            except Exception as e:
+                print("JSON parse error:", e, flush=True)
+                data = None
+
         if not data:
-            data = request.values.to_dict()
+            return jsonify({
+                "result": "No input received"
+            }), 200
 
-        # ვაიძულებთ პითონს, ლოგი მაშინვე გამოიტანოს ტერმინალში
-        print(f"\n✅ [CoPilot Request]: {data}\n", flush=True)
-
-        # თუ მონაცემები საერთოდ არ მოვიდა
-        if not data:
-            return jsonify({"status": "success"}), 200
-
-        # ვიღებთ მომხმარებლის მიერ დაწერილ ტექსტს (პრომპტს)
         prompt = data.get("prompt", "")
-        
-        # სატესტო პასუხი, სანამ Gemini-ს მივაბამთ
-        generated_text = f"მე ვარ შენი CoPilot ასისტენტი. შენ მომწერე: {prompt}"
 
-        # ❗️ როდესაც მზად იქნები, ზედა ხაზს წაშლი და გამოიყენებ შენს ai_engine-ს:
-        # generated_text = ai.generate_reply(prompt) 
+        # დროებითი ტესტი
+        generated_text = f"Test response from Flask Copilot. Prompt length: {len(prompt)}"
 
-        # ვაბრუნებთ პასუხს
-        return jsonify({"result": generated_text}), 200
+        return jsonify({
+            "result": generated_text
+        }), 200
 
     except Exception as e:
         print(f"❌ Error in ai_completions: {e}", flush=True)
