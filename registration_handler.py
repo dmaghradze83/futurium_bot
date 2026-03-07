@@ -12,6 +12,21 @@ def handle_install(data, incoming_auth):
     # 1. რეგისტრაციის მოთხოვნა Bitrix-თან
     result = BitrixClient.call("imbot.register", Config.REG_PARAMS, incoming_auth)
 
+    # CoPilot-ის ტექსტის გენერატორის (Gemini) პარამეტრები
+    ai_engine_params = {
+        "name": "Gemini (Georgian)", 
+        "code": "gemini_pro_geo",   
+        "category": "text",          
+        "completions_url": f"{Config.NGROK_URL}/api/ai/completions", # 👈 დარწმუნდი, რომ Config-ში BASE_URL გაქვს
+        "settings": {
+            "model_context_limit": 32000
+        }
+    }
+
+    # AI ძრავის რეგისტრაციის მოთხოვნა
+    ai_result = BitrixClient.call("ai.engine.register", ai_engine_params, incoming_auth)
+    print(f"🧠 AI Engine registration: {ai_result}")
+
     # HTML პასუხი, რასაც Bitrix ელოდება iframe-ში
     finish_html = """<!DOCTYPE html><html><head>
     <script src="//api.bitrix24.com/api/v1/"></script>
