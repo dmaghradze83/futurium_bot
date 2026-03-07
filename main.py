@@ -58,6 +58,18 @@ def ai_completions():
 
     try:
         # მონაცემების წამოღება (JSON ან Form Data)
+
+        # სრული დიაგნოსტიკა
+        print("\n================= CoPilot DEBUG =================", flush=True)
+        print("Method:", request.method, flush=True)
+        print("Headers:", dict(request.headers), flush=True)
+        print("Args:", request.args.to_dict(flat=False), flush=True)
+        print("Form:", request.form.to_dict(flat=False), flush=True)
+        print("Values:", request.values.to_dict(flat=False), flush=True)
+        print("Raw body bytes:", request.data, flush=True)
+        print("Raw body text:", request.get_data(as_text=True), flush=True)
+        print("=================================================\n", flush=True)
+        
         data = request.get_json(silent=True)
         if not data:
             data = request.values.to_dict()
