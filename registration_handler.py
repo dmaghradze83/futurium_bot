@@ -1,4 +1,4 @@
-from config import Config, ConfigManager
+from config import Config, ConfigManager, json
 from bitrix_client import BitrixClient
 
 def handle_install(data, incoming_auth):
@@ -18,9 +18,9 @@ def handle_install(data, incoming_auth):
         "code": "gemini_pro_geo",   
         "category": "text",          
         "completions_url": f"{Config.NGROK_URL}/api/ai/completions", # 👈 დარწმუნდი, რომ Config-ში BASE_URL გაქვს
-        "settings": {
+        "settings": json.dumps({
             "model_context_limit": 32000
-        }
+        })
     }
 
     # AI ძრავის რეგისტრაციის მოთხოვნა
