@@ -18,11 +18,7 @@ def handle_install(data, incoming_auth):
         "code": "gemini_pro_geo",
         "category": "text",
         "completions_url": f"{Config.NGROK_URL}/api/ai/completions",
-        "settings": json.dumps({               # 👈 JS-ისგან განსხვავებით, აქ ვფუთავთ
-            "code_alias": "gemini_pro_geo",           # Bitrix-ს ვეუბნებით, რომ ChatGPT-სავით მოექცეს
-            "model_context_type": "token",
-            "model_context_limit": 16 * 1024   # ანუ 16384
-        })
+        "settings": '{"code_alias":"gemini_pro_geo","model_context_type":"token","model_context_limit":16384}'
     }
 
     # AI ძრავის რეგისტრაციის მოთხოვნა
