@@ -56,42 +56,24 @@ def ai_completions():
         return jsonify({"status": "success"}), 200
 
     try:
-        raw_bytes = request.get_data(cache=True)
-        raw_text = raw_bytes.decode("utf-8", errors="replace")
-
-        print("\n================= CoPilot DEBUG =================", flush=True)
-        print("Method:", request.method, flush=True)
-        print("Headers:", dict(request.headers), flush=True)
-        print("Content-Length header:", request.headers.get("Content-Length"), flush=True)
-        print("Raw bytes len:", len(raw_bytes), flush=True)
-        print("Raw text first 1000 chars:", raw_text[:1000], flush=True)
-        print("=================================================\n", flush=True)
-
-        data = request.get_json(silent=True)
-
-        if not data and raw_text:
-            try:
-                data = json.loads(raw_text)
-            except Exception as e:
-                print("JSON parse error:", e, flush=True)
-                data = None
-
-        if not data:
-            return jsonify({
-                "result": "No input received"
-            }), 200
-
+        data = request.get_json(force=True, silent=True) or {}
         prompt = data.get("prompt", "")
 
-        # დროებითი ტესტი
-        generated_text = f"Test response from Flask Copilot. Prompt length: {len(prompt)}"
+        generated_text = "Test summary from custom AI engine."
 
-        return jsonify({
-            "result": generated_text
-        }), 200
+        response = {
+            "result": generated_text,
+            "answer": generated_text,
+            "content": generated_text,
+            "text": generated_text,
+            "status": "success"
+        }
+
+        print("Response JSON:", response, flush=True)
+        return jsonify(response), 200
 
     except Exception as e:
-        print(f"❌ Error in ai_completions: {e}", flush=True)
+        print("❌ ai_completions error:", e, flush=True)
         return jsonify({"error": str(e)}), 500
 # =====================================================================
 # =====================================================================
