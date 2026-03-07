@@ -13,12 +13,19 @@ def handle_install(data, incoming_auth):
     result = BitrixClient.call("imbot.register", Config.REG_PARAMS, incoming_auth)
 
     # CoPilot-ის ტექსტის გენერატორის (Gemini) პარამეტრები
+
+    ai_engine_settings = {
+        "code_alias": "gemini_pro_geo",
+        "model_context_type": "token",
+        "model_context_limit": 16384
+    }
+
     ai_engine_params = {
         "name": "Gemini (Georgian)",
         "code": "gemini_pro_geo",
         "category": "text",
         "completions_url": f"{Config.NGROK_URL}/api/ai/completions",
-        "settings": '{"code_alias":"gemini_pro_geo","model_context_type":"token","model_context_limit":16384}'
+        "settings": json.dumps(ai_engine_settings, ensure_ascii=False)
     }
 
     # AI ძრავის რეგისტრაციის მოთხოვნა
