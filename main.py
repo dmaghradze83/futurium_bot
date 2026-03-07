@@ -56,6 +56,8 @@ def ai_completions():
     # 2. ტექსტის გენერაციის რეალური მოთხოვნა CoPilot-იდან (POST მოთხოვნა)
     try:
         data = request.get_json() or {}
+
+        print(f"✅ request json {data}")
         
         # თუ რეგისტრაციის დროს ცარიელი POST წამოვიდა, ვაბრუნებთ 200-ს, რომ error არ ამოაგდოს
         if not data:
