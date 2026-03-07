@@ -60,6 +60,9 @@ def ai_completions():
         # მონაცემების წამოღება (JSON ან Form Data)
 
         # სრული დიაგნოსტიკა
+        raw_bytes = request.get_data(cache=True)
+        raw_text = raw_bytes.decode("utf-8", errors="replace")
+        
         print("\n================= CoPilot DEBUG =================", flush=True)
         print("Method:", request.method, flush=True)
         print("Headers:", dict(request.headers), flush=True)
