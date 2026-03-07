@@ -14,12 +14,14 @@ def handle_install(data, incoming_auth):
 
     # CoPilot-ის ტექსტის გენერატორის (Gemini) პარამეტრები
     ai_engine_params = {
-        "name": "Gemini (Georgian)", 
-        "code": "gemini_pro_geo",   
-        "category": "text",          
-        "completions_url": f"{Config.NGROK_URL}/api/ai/completions", # 👈 დარწმუნდი, რომ Config-ში BASE_URL გაქვს
-        "settings": json.dumps({
-            "model_context_limit": 32000
+        "name": "Gemini (Georgian)",
+        "code": "gemini_pro_geo",
+        "category": "text",
+        "completions_url": f"{Config.BASE_URL}/api/ai/completions",
+        "settings": json.dumps({               # 👈 JS-ისგან განსხვავებით, აქ ვფუთავთ
+            "code_alias": "ChatGPT",           # Bitrix-ს ვეუბნებით, რომ ChatGPT-სავით მოექცეს
+            "model_context_type": "token",
+            "model_context_limit": 16 * 1024   # ანუ 16384
         })
     }
 
